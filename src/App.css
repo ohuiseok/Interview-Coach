@@ -383,10 +383,17 @@ button:disabled {
 
 .sessionProgress {
   display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-surface-muted);
+}
+
+.sessionProgress > svg {
+  margin-left: 8px;
+  color: var(--color-text-soft);
 }
 
 .sessionProgress span {

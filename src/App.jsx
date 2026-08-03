@@ -4,7 +4,7 @@ import {
   Camera,
   CheckCircle2,
   Download,
-  FileSpreadsheet,
+  Home,
   KeyRound,
   Mic,
   RotateCcw,
@@ -18,6 +18,14 @@ import templateCsv from './assets/interview-template.csv?raw'
 const WAIT_SECONDS = 3
 const ANSWER_SECONDS = 30
 const OPENAI_MODEL = 'gpt-4.1-mini'
+
+function normalizeApiKey(value) {
+  return value
+    .trim()
+    .replace(/^Bearer\s+/i, '')
+    .replace(/^["']|["']$/g, '')
+    .trim()
+}
 
 function downloadTemplate() {
   const blob = new Blob([`\uFEFF${templateCsv}`], { type: 'text/csv;charset=utf-8' })
@@ -118,26 +126,24 @@ function hasLiveMediaTracks(stream) {
 
 function buildFeedbackPrompt({ question, expectedAnswer, transcript }) {
   return [
-    '너는 한국어 면접 코치다.',
-    '지원자의 답변을 실전 면접 기준으로 짧고 구체적으로 피드백해라.',
-    '반드시 한국어로 답변하고, 아래 형식을 지켜라.',
+    '너는 10년 차 시니어 개발자 면접관이다.',
+    '지원자의 답변을 실제 기술 면접 기준으로 평가한다.',
+    '친절한 튜터처럼 길게 설명하지 말고, 면접관이 면접 후 남기는 평가 메모처럼 구체적이고 간결하게 피드백해라.',
+    '질문 의도, 핵심 키워드 포함 여부, 논리 구조, 실무 이해도, 보완 답변 예시를 기준으로 평가한다.',
+    '지원자의 답변이 비어 있거나 부족하면, 부족하다고 명확히 말하고 어떤 방향으로 답해야 하는지 제시한다.',
+    '반드시 한국어로 답변하고, 아래 형식을 정확히 지켜라.',
     '',
-    '1. 총평: 한 문장',
-    '2. 잘한 점: 2개',
-    '3. 보완할 점: 2개',
-    '4. 더 나은 답변 예시: 5문장 이내',
+    '1. 면접관 평가: 한 문장',
+    '2. 질문 의도: 이 질문으로 확인하려는 역량',
+    '3. 잘한 점: 최대 2개',
+    '4. 부족한 점: 최대 2개',
+    '5. 더 나은 답변 예시: 5문장 이내',
+    '6. 다음 답변에 넣을 키워드: 3~5개',
     '',
     `면접 질문: ${question}`,
     `템플릿 예상 답변: ${expectedAnswer}`,
     `지원자 답변: ${transcript || '답변 없음'}`,
   ].join('\n')
-}
-
-function getPhaseLabel(phase) {
-  if (phase === 'waiting') return '준비'
-  if (phase === 'answering') return '답변'
-  if (phase === 'result') return '리뷰'
-  return '대기'
 }
 
 function App() {
@@ -420,7 +426,8 @@ function App() {
   }
 
   async function requestAiFeedback() {
-    if (!currentItem || !apiKey.trim()) return
+    const normalizedApiKey = normalizeApiKey(apiKey)
+    if (!currentItem || !normalizedApiKey) return
 
     setError('')
     setFeedback('')
@@ -432,20 +439,25 @@ function App() {
     feedbackAbortRef.current = controller
 
     try {
-      const response = await fetch('https://api.openai.com/v1/responses', {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey.trim()}`,
+          Authorization: `Bearer ${normalizedApiKey}`,
         },
         body: JSON.stringify({
           model: OPENAI_MODEL,
-          input: buildFeedbackPrompt({
-            question: currentItem.question,
-            expectedAnswer: currentItem.expectedAnswer,
-            transcript,
-          }),
+          messages: [
+            {
+              role: 'user',
+              content: buildFeedbackPrompt({
+                question: currentItem.question,
+                expectedAnswer: currentItem.expectedAnswer,
+                transcript,
+              }),
+            },
+          ],
         }),
       })
 
@@ -458,6 +470,7 @@ function App() {
       }
 
       const outputText =
+        data.choices?.[0]?.message?.content ||
         data.output_text ||
         data.output
           ?.flatMap((item) => item.content ?? [])
@@ -609,11 +622,8 @@ function App() {
       <section className={`interviewPanel ${phase}Panel`}>
         <div className="questionHeader">
           <div>
-            <p className="eyebrow">
-              <Sparkles size={16} />
-              {getPhaseLabel(phase)}
-            </p>
             <div className="sessionProgress" aria-label="면접 진행 상태">
+              <Sparkles size={14} aria-hidden="true" />
               <span className={phase === 'waiting' ? 'active' : ''}>준비</span>
               <span className={phase === 'answering' ? 'active' : ''}>답변</span>
               <span className={phase === 'result' ? 'active' : ''}>리뷰</span>
@@ -623,11 +633,10 @@ function App() {
             type="button"
             className="textButton iconButton"
             onClick={resetApp}
-            aria-label="템플릿 다시 선택"
-            title="템플릿 다시 선택"
+            aria-label="처음으로 돌아가기"
+            title="처음으로 돌아가기"
           >
-            <FileSpreadsheet size={16} />
-            템플릿
+            <Home size={16} />
           </button>
         </div>
 
