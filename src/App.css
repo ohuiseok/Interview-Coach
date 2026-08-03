@@ -349,9 +349,30 @@ code {
     inset 0 0 80px rgba(22, 26, 29, 0.26);
 }
 
+.cameraFallback {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  color: rgba(255, 253, 251, 0.78);
+  background: #161a1d;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.cameraFallback span {
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 253, 251, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 253, 251, 0.06);
+}
+
 .phaseBadge {
   position: absolute;
-  z-index: 1;
+  z-index: 2;
   top: 18px;
   left: 18px;
   padding: 8px 12px;

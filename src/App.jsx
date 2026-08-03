@@ -115,15 +115,15 @@ function getSpeechRecognition() {
   return window.SpeechRecognition || window.webkitSpeechRecognition
 }
 
-function pickRandom(items) {
-  return items[Math.floor(Math.random() * items.length)]
-}
+function shuffleItems(items) {
+  const shuffled = [...items]
 
-function pickRandomExcept(items, excludedItem) {
-  if (items.length <= 1 || !excludedItem) return pickRandom(items)
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
 
-  const candidates = items.filter((item) => item !== excludedItem)
-  return pickRandom(candidates.length > 0 ? candidates : items)
+  return shuffled
 }
 
 function hasLiveMediaTracks(stream) {
@@ -168,6 +168,7 @@ function App() {
   const [apiKey, setApiKey] = useState('')
   const [error, setError] = useState('')
   const [currentItem, setCurrentItem] = useState(null)
+  const [questionQueue, setQuestionQueue] = useState([])
   const [phase, setPhase] = useState('idle')
   const [countdown, setCountdown] = useState(WAIT_SECONDS)
   const [answerTime, setAnswerTime] = useState(ANSWER_SECONDS)
@@ -190,11 +191,15 @@ function App() {
   const canRequestFeedback = Boolean(apiKey.trim()) && phase === 'result'
 
   useEffect(() => {
-    if (videoRef.current && cameraStream) {
-      videoRef.current.srcObject = cameraStream
-    }
     cameraStreamRef.current = cameraStream
-  }, [cameraStream])
+
+    if (!videoRef.current || !cameraStream) return
+
+    videoRef.current.srcObject = cameraStream
+    videoRef.current.play?.().catch(() => {
+      setError('카메라 미리보기를 자동 재생하지 못했어요. 브라우저 권한을 확인해주세요.')
+    })
+  }, [cameraStream, page])
 
   useEffect(() => {
     return () => {
@@ -279,9 +284,11 @@ function App() {
       const stream = hasLiveMediaTracks(cameraStream) ? cameraStream : await requestPermissions()
       if (!stream) return
 
-      const firstItem = pickRandom(parsed)
+      const shuffledQuestions = shuffleItems(parsed)
+      const [firstItem, ...remainingQuestions] = shuffledQuestions
       setTemplate(parsed)
       setCurrentItem(firstItem)
+      setQuestionQueue(remainingQuestions)
       setRetakeUsed(false)
       setTranscript('')
       setFeedback('')
@@ -408,7 +415,15 @@ function App() {
   }
 
   function handleNextQuestion() {
-    const nextItem = pickRandomExcept(template, currentItem)
+    const nextQueue =
+      questionQueue.length > 0
+        ? questionQueue
+        : shuffleItems(template).filter((item) => item !== currentItem)
+    const [nextItem, ...remainingQuestions] = nextQueue
+
+    if (!nextItem) return
+
+    setQuestionQueue(remainingQuestions)
     setError('')
     setRetakeUsed(false)
     beginWaiting(nextItem)
@@ -482,6 +497,7 @@ function App() {
     setPage('setup')
     setTemplate([])
     setCurrentItem(null)
+    setQuestionQueue([])
     setPhase('idle')
     setTranscript('')
     setInterimTranscript('')
@@ -580,6 +596,12 @@ function App() {
     <main className="appShell practicePage">
       <section className="cameraPanel">
         <video ref={videoRef} autoPlay muted playsInline aria-label="카메라 미리보기" />
+        {!hasLiveMediaTracks(cameraStream) && (
+          <div className="cameraFallback">
+            <Camera size={22} />
+            <span>카메라 연결 대기</span>
+          </div>
+        )}
         <div className="phaseBadge">
           {phase === 'waiting' && `${countdown}초 후 시작`}
           {phase === 'answering' && `답변 중 ${answerTime}초`}
