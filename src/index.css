@@ -1,0 +1,46 @@
+:root {
+  --color-page: #f2f0ef;
+  --color-surface: #fffefd;
+  --color-surface-muted: #f6f4f2;
+  --color-border: #ddd8d2;
+  --color-border-strong: #c8c1b8;
+  --color-text: #1d1d1f;
+  --color-text-muted: #56514c;
+  --color-text-soft: #817971;
+  --color-primary: #1d1d1f;
+  --color-primary-hover: #000000;
+  --color-accent: #4f7cff;
+  --color-accent-soft: #e8efff;
+  --color-danger: #b42342;
+  --color-danger-soft: #fff1f2;
+  --color-info-soft: #eef3ff;
+  --shadow-panel: 0 24px 70px rgba(29, 29, 31, 0.08);
+
+  font-family:
+    Pretendard, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  color: var(--color-text);
+  background: var(--color-page);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@font-face {
+  font-family: Pretendard;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/woff2/PretendardVariable.woff2')
+    format('woff2-variations');
+}
+
+body {
+  min-width: 320px;
+  min-height: 100svh;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
