@@ -13,35 +13,14 @@ import {
   Upload,
 } from 'lucide-react'
 import './App.css'
-
-const SAMPLE_ROWS = [
-  ['질문', '예상답변'],
-  [
-    '자기소개를 해주세요.',
-    '지원 직무와 연결되는 경험, 강점, 최근 성과를 1분 안에 구조적으로 설명합니다.',
-  ],
-  [
-    '가장 어려웠던 프로젝트 경험은 무엇인가요?',
-    '상황, 문제, 내가 맡은 역할, 해결 과정, 결과와 배운 점 순서로 답변합니다.',
-  ],
-  [
-    '우리 회사에 지원한 이유는 무엇인가요?',
-    '회사와 직무에 관심을 갖게 된 계기, 내가 기여할 수 있는 역량, 입사 후 목표를 연결합니다.',
-  ],
-]
+import templateCsv from './assets/interview-template.csv?raw'
 
 const WAIT_SECONDS = 3
 const ANSWER_SECONDS = 30
 const OPENAI_MODEL = 'gpt-4.1-mini'
 
-function csvEscape(value) {
-  const text = String(value ?? '')
-  return `"${text.replaceAll('"', '""')}"`
-}
-
 function downloadTemplate() {
-  const csv = SAMPLE_ROWS.map((row) => row.map(csvEscape).join(',')).join('\n')
-  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
+  const blob = new Blob([`\uFEFF${templateCsv}`], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -178,6 +157,7 @@ function App() {
   const [feedback, setFeedback] = useState('')
   const [feedbackStatus, setFeedbackStatus] = useState('idle')
   const [cameraStream, setCameraStream] = useState(null)
+  const fileInputRef = useRef(null)
   const videoRef = useRef(null)
   const cameraStreamRef = useRef(null)
   const recognitionRef = useRef(null)
@@ -188,6 +168,7 @@ function App() {
   const feedbackRequestIdRef = useRef(0)
 
   const speechSupported = useMemo(() => Boolean(getSpeechRecognition()), [])
+  const mediaReady = hasLiveMediaTracks(cameraStream)
   const canRequestFeedback = Boolean(apiKey.trim()) && phase === 'result'
 
   useEffect(() => {
@@ -273,6 +254,9 @@ function App() {
     if (!file) return
 
     try {
+      const stream = hasLiveMediaTracks(cameraStream) ? cameraStream : await requestPermissions()
+      if (!stream) return
+
       const text = await readCsvFile(file)
       const parsed = parseCsv(text)
 
@@ -280,9 +264,6 @@ function App() {
         setError('CSV에서 질문과 예상답변 쌍을 찾지 못했어요.')
         return
       }
-
-      const stream = hasLiveMediaTracks(cameraStream) ? cameraStream : await requestPermissions()
-      if (!stream) return
 
       const shuffledQuestions = shuffleItems(parsed)
       const [firstItem, ...remainingQuestions] = shuffledQuestions
@@ -302,6 +283,15 @@ function App() {
     } finally {
       event.target.value = ''
     }
+  }
+
+  async function handleUploadClick() {
+    setError('')
+    const stream = mediaReady ? cameraStream : await requestPermissions()
+
+    if (!stream) return
+
+    fileInputRef.current?.click()
   }
 
   function beginWaiting(nextItem = currentItem) {
@@ -573,17 +563,24 @@ function App() {
               <Download size={18} />
               다운
             </button>
-            <label className="uploadButton">
+            <button
+              type="button"
+              className="uploadButton"
+              onClick={handleUploadClick}
+              disabled={!mediaReady}
+              title={mediaReady ? 'CSV 업로드' : '카메라와 마이크를 먼저 허용해주세요'}
+            >
               <Upload size={18} />
               업로드
-              <input type="file" accept=".csv,text/csv" onChange={handleUpload} />
-            </label>
+            </button>
+            <input
+              ref={fileInputRef}
+              className="hiddenFileInput"
+              type="file"
+              accept=".csv,text/csv"
+              onChange={handleUpload}
+            />
           </div>
-
-          <p className="formatHint">
-            <FileSpreadsheet size={15} />
-            <code>질문,예상답변</code>
-          </p>
 
           {!speechSupported && <p className="notice">음성 인식 미지원 브라우저입니다.</p>}
           {error && <p className="errorText">{error}</p>}

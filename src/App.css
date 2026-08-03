@@ -132,8 +132,7 @@ p {
 }
 
 .permissionRow div > span:last-child,
-.apiKeyField small,
-.formatHint {
+.apiKeyField small {
   color: var(--color-text-soft);
   font-size: 12px;
 }
@@ -254,33 +253,12 @@ button:disabled {
   flex: 0 0 auto;
 }
 
-.uploadButton input {
+.hiddenFileInput {
   position: absolute;
   width: 1px;
   height: 1px;
   opacity: 0;
   pointer-events: none;
-}
-
-.formatHint {
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  padding: 11px 13px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-surface-muted);
-}
-
-code {
-  padding: 4px 8px;
-  border-radius: 6px;
-  color: var(--color-text);
-  background: var(--color-accent-soft);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 12px;
 }
 
 .notice,
@@ -632,8 +610,7 @@ code {
 
   .permissionRow,
   .onboardingActions,
-  .feedbackHeader,
-  .formatHint {
+  .feedbackHeader {
     align-items: stretch;
     grid-template-columns: 1fr;
     flex-direction: column;
