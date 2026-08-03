@@ -699,10 +699,10 @@ function App() {
                     {feedbackStatus === 'loading' ? '분석 중' : 'AI 피드백 받기'}
                   </button>
                 </div>
-                <p>
+                <div className={`feedbackBody ${feedback ? 'hasFeedback' : ''}`}>
                   {feedback ||
                     '버튼을 누르면 질문, 예상 답변, 내 답변을 바탕으로 피드백을 생성합니다.'}
-                </p>
+                </div>
               </article>
             )}
             <div className="resultActions">

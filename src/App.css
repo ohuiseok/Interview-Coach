@@ -556,6 +556,12 @@ button:disabled {
   gap: 10px;
 }
 
+.feedbackPanel.reportCard {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 251, 0.86), transparent),
+    var(--color-surface);
+}
+
 .feedbackHeader {
   display: flex;
   gap: 12px;
@@ -565,6 +571,27 @@ button:disabled {
 
 .feedbackHeader .reportHeader {
   margin-bottom: 0;
+}
+
+.feedbackBody {
+  max-height: 260px;
+  margin: 0;
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+  font-size: 13px;
+  line-height: 1.72;
+  white-space: pre-wrap;
+}
+
+.feedbackBody.hasFeedback {
+  color: var(--color-text);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 251, 0.9), transparent),
+    #ffffff;
 }
 
 .resultActions {
